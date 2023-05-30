@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "openzeppelin/token/ERC20/IERC20.sol";
 import "openzeppelin/access/Ownable.sol";
 import "openzeppelin/utils/math/SafeMath.sol";
-
+import "../src/interface/IUniswapV2.sol";
 import "forge-std/console.sol";
 
 interface IWETH is IERC20 {
@@ -12,61 +12,41 @@ interface IWETH is IERC20 {
     function withdraw(uint) external;
 }
 
-interface IUniswapV2Pair {
-    function getReserves()
-        external
-        view
-        returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-
-    function swap(
-        uint amount0Out,
-        uint amount1Out,
-        address to,
-        bytes calldata data
-    ) external;
-
-    function token0() external view returns (address);
-
-    function token1() external view returns (address);
-}
-
 contract MutiSwap is Ownable {
     using SafeMath for uint256;
     address public immutable WETH_ADDRESS;
 
     constructor(address _wethAddress) {
         WETH_ADDRESS = _wethAddress;
+        
     }
 
     struct SwapInfo {
         address pair;
-        uint256 amountIn;
-        uint256 amountOut;
-        bool isZeroOut;
+        uint128 amountIn;
+        uint128 amountOut;
+        uint8 tokenOutNo;
     }
 
     function multi_swap(
-        SwapInfo[] memory _swaps,
-        uint256 payToCoinbase
-    ) external onlyOwner {
+        SwapInfo[] memory _swaps
+    ) external payable onlyOwner {
         for (uint i = 0; i < _swaps.length; i++) {
             SwapInfo memory swap = _swaps[i];
-            if(swap.isZeroOut) {
-                IUniswapV2Pair pair = IUniswapV2Pair(swap.pair);
+            IUniswapV2Pair pair = IUniswapV2Pair(swap.pair);
+            if(swap.tokenOutNo == 0) {
                 IERC20(pair.token1()).transfer(swap.pair, swap.amountIn);
                 pair.swap(swap.amountOut, 0, address(this), "");
-                console.log('balance',IERC20(pair.token0()).balanceOf(address(this)));
+                // console.log('balance',IERC20(pair.token0()).balanceOf(address(this)));
             } else {
-                IUniswapV2Pair pair = IUniswapV2Pair(swap.pair);
                 IERC20(pair.token0()).transfer(swap.pair, swap.amountIn);
-                pair.swap(0, swap.amountOut, address(this), "");
-                console.log('balance',IERC20(pair.token1()).balanceOf(address(this)));
+                pair.swap(0, swap.amountOut, address(this), '');
+                // console.log('balance',IERC20(pair.token1()).balanceOf(address(this)));
             }
             
         }
-        if (payToCoinbase > 0) {
-            IWETH(WETH_ADDRESS).withdraw(payToCoinbase);
-            block.coinbase.transfer(payToCoinbase);
+        if (msg.value > 0) {
+            block.coinbase.transfer(msg.value );
         }
     }
 

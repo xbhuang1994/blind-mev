@@ -275,71 +275,13 @@ contract BlindBackrunTest is Test {
     }
 
     function test_mainnetMutiSwap() public {
-        address[] memory pairs = new address[](2);
-        pairs[0] = address(0x06da0fd433C1A5d7a4faa01111c044910A184553);
-        pairs[1] = address(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
-        uint256[] memory amountIns = new uint256[](2);
-        amountIns[0] = 1e18;
-        amountIns[1] = 1e18;
-        uint256[] memory amountOuts = new uint256[](2);
-        IUniswapV2Pair2 firstPair = IUniswapV2Pair2(pairs[0]);
-        IUniswapV2Pair2 secondPair = IUniswapV2Pair2(pairs[1]);
-
-        IPairReserves.PairReserves memory firstPairData = blindBackrun
-            .getPairData(firstPair);
-        IPairReserves.PairReserves memory secondPairData = blindBackrun
-            .getPairData(secondPair);
-        amountOuts[0] = blindBackrun.getAmountOut(
-            amountIns[0],
-            firstPairData.reserve0,
-            firstPairData.reserve1
-        );
-        amountOuts[1] = blindBackrun.getAmountOut(
-            amountIns[1],
-            secondPairData.reserve0,
-            secondPairData.reserve1
-        );
-        console.log(amountIns[0], amountOuts[0]);
-        console.log(amountIns[1], amountOuts[1]);
-        BlindBackrun.SwapInfo[] memory swaps = new BlindBackrun.SwapInfo[](2);
-        // Initialize the SwapInfo struct
-        BlindBackrun.SwapInfo memory swap0 = BlindBackrun.SwapInfo({
-            pair: pairs[0],
-            amountIn: 1e18,
-            amountOut: amountOuts[0],
-            isZeroOut: true
-        });
-        BlindBackrun.SwapInfo memory swap1 = BlindBackrun.SwapInfo({
-            pair: pairs[1],
-            amountIn: 1e18,
-            amountOut: amountOuts[1],
-            isZeroOut: true
-        });
-        swaps[0] = swap0;
-        swaps[1] = swap1;
-        // uint256 startGas = gasleft();
-        // blindBackrun.multi_swap(swaps, 0);
-        // uint256 endGas = gasleft();
-        // uint256 gasConsumed = startGas - endGas;
-        // console.log("multi_swap gas :", gasConsumed);
-        MutiSwap.SwapInfo[] memory swapInfos = new MutiSwap.SwapInfo[](2);
-        // Initialize the SwapInfo struct
-        MutiSwap.SwapInfo memory swapInfo0 = MutiSwap.SwapInfo({
-            pair: swap0.pair,
-            amountIn: 1e18,
-            amountOut: amountOuts[0],
-            isZeroOut: false
-        });
-        MutiSwap.SwapInfo memory swapInfo1 = MutiSwap.SwapInfo({
-            pair: swap1.pair,
-            amountIn: 1e18,
-            amountOut: amountOuts[1],
-            isZeroOut: false
-        });
-        swapInfos[0] = swapInfo0;
-        swapInfos[1] = swapInfo1;
+        MutiSwap.SwapInfo[] memory swaps2 = new MutiSwap.SwapInfo[](4);
+        swaps2[0] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1896830188, tokenOutNo: 1});
+        swaps2[1] = MutiSwap.SwapInfo({pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000000, amountOut: 1886830188, tokenOutNo: 1});
+        swaps2[2] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1786830188, tokenOutNo: 1});
+        swaps2[3] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1786830188, tokenOutNo: 1});
         uint256 startGas1 = gasleft();
-        mutiSwap.multi_swap(swapInfos, 0);
+        mutiSwap.multi_swap(swaps2);
         uint256 endGas1 = gasleft();
         uint256 gasConsumed1 = startGas1 - endGas1;
         console.log("multi_swap gas :", gasConsumed1);
