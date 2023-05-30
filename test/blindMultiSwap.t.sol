@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "../src/TokenForTesting.sol";
-import "../src/blindBackrunDebug.sol";
 import "openzeppelin/token/ERC20/IERC20.sol";
 import "openzeppelin/token/ERC20/ERC20.sol";
 import "../src/multiSwap.sol";
@@ -46,7 +45,6 @@ contract BlindBackrunTest is Test {
         bool isWETHZero;
     }
 
-    BlindBackrun public blindBackrun;
     MutiSwap public mutiSwap;
     address uniswapV2RouterAddress =
         address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
@@ -76,7 +74,6 @@ contract BlindBackrunTest is Test {
     IWETH WETH = IWETH(wethTokenAddress);
 
     function setUp() public {
-        blindBackrun = new BlindBackrun(wethTokenAddress); // WETH address on
         mutiSwap = new MutiSwap(wethTokenAddress);
         vm.deal(address(msg.sender), 1e25);
         WETH.deposit{value: 1e23}();

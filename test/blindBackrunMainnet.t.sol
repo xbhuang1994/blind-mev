@@ -5,7 +5,6 @@ import "../src/TokenForTesting.sol";
 import "../src/blindBackrunDebug.sol";
 import "openzeppelin/token/ERC20/IERC20.sol";
 import "openzeppelin/token/ERC20/ERC20.sol";
-import "../src/multiSwap.sol";
 
 error Unauthorized();
 
@@ -47,7 +46,6 @@ contract BlindBackrunTest is Test {
     }
 
     BlindBackrun public blindBackrun;
-    MutiSwap public mutiSwap;
     address uniswapV2RouterAddress =
         address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address sushiswapRouterAddress =
@@ -77,12 +75,9 @@ contract BlindBackrunTest is Test {
 
     function setUp() public {
         blindBackrun = new BlindBackrun(wethTokenAddress); // WETH address on
-        mutiSwap = new MutiSwap(wethTokenAddress);
         vm.deal(address(msg.sender), 1e25);
         WETH.deposit{value: 1e23}();
         WETH.transfer(address(blindBackrun), 1e23);
-        WETH.deposit{value: 1e23}();
-        WETH.transfer(address(mutiSwap), 1e23);
     }
 
     function test_arbitrageCalculation() public view {
@@ -272,19 +267,6 @@ contract BlindBackrunTest is Test {
 
         // blindBackrun.executeArbitrage(firstPair, secondPair, 80);
         blindBackrun.executeArbitrage(secondPair, firstPair, 80);
-    }
-
-    function test_mainnetMutiSwap() public {
-        MutiSwap.SwapInfo[] memory swaps2 = new MutiSwap.SwapInfo[](4);
-        swaps2[0] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1896830188, tokenOutNo: 1});
-        swaps2[1] = MutiSwap.SwapInfo({pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000000, amountOut: 1886830188, tokenOutNo: 1});
-        swaps2[2] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1786830188, tokenOutNo: 1});
-        swaps2[3] = MutiSwap.SwapInfo({pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1786830188, tokenOutNo: 1});
-        uint256 startGas1 = gasleft();
-        mutiSwap.multi_swap(swaps2);
-        uint256 endGas1 = gasleft();
-        uint256 gasConsumed1 = startGas1 - endGas1;
-        console.log("multi_swap gas :", gasConsumed1);
     }
 
     function test_RevertWhen_CallerIsNotOwner() public {

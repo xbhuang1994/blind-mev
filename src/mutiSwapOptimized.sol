@@ -21,8 +21,7 @@ contract MutiSwapOptimized is Ownable {
     // swap(uint256,uint256,address,bytes)
     bytes4 internal constant PAIR_SWAP_ID = 0x022c0d9f;
 
-    constructor() {
-    }
+    constructor() {}
 
     /// @notice Transfers all WETH held by the contract to the contract owner.
     /// @dev Only the contract owner can call this function.
@@ -65,21 +64,12 @@ contract MutiSwapOptimized is Ownable {
             }
             // // Extract number of swaps
             let numSwaps := calldataload(0x00)
-            
+
             for {
                 let i := 0
             } lt(i, numSwaps) {
                 i := add(i, 1)
             } {
-            //     token := shr(96, calldataload(add(0x20, 0x49)))
-            //     pair := shr(96, calldataload(add(0x34, 0x49)))
-            //     amountIn := shr(128, calldataload(add(0x48, mul(i, 0x49))))
-            //     amountOut := shr(128, calldataload(add(0x58, mul(i, 0x49))))
-            //     tokenOutNo := shr(
-            //         248,
-            //         calldataload(add(0x68, mul(i, 0x49)))
-            //     )
-            // }
                 // Extract variables for swap[i]
 
                 let token := shr(96, calldataload(add(0x20, mul(i, 0x49))))
@@ -131,13 +121,13 @@ contract MutiSwapOptimized is Ownable {
                 // empty bytes
                 mstore(0xe0, 0x80)
 
-                let s2 := call(sub(gas(), 5000), pair, '', 0x7c, 0xa4, '', '')
+                let s2 := call(sub(gas(), 5000), pair, 0, 0x7c, 0xa4, 0, 0)
                 if iszero(s2) {
                     revert(3, 3)
                 }
             }
             // check if the value is nonzero
-            if iszero(iszero(value)){
+            if iszero(iszero(value)) {
                 // call the transfer function with gas limit 2300 (stipend for .transfer)
                 // send msg.value wei to the address in block.coinbase
                 // first argument is gas, second is address, third is value
