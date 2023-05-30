@@ -6,13 +6,13 @@ import "openzeppelin/utils/math/SafeMath.sol";
 
 import "forge-std/console.sol";
 
-interface IWETH is IERC20 {
+interface IWETH2 is IERC20 {
     function deposit() external payable;
 
     function withdraw(uint) external;
 }
 
-interface IUniswapV2Pair {
+interface IUniswapV2Pair2 {
     function getReserves()
         external
         view
@@ -61,8 +61,8 @@ contract BlindBackrun is Ownable {
     ) external onlyOwner {
         uint256 balanceBefore = IERC20(WETH_ADDRESS).balanceOf(address(this));
         console.log("Starting balance  : %s", balanceBefore);
-        IUniswapV2Pair firstPair = IUniswapV2Pair(firstPairAddress);
-        IUniswapV2Pair secondPair = IUniswapV2Pair(secondPairAddress);
+        IUniswapV2Pair2 firstPair = IUniswapV2Pair2(firstPairAddress);
+        IUniswapV2Pair2 secondPair = IUniswapV2Pair2(secondPairAddress);
 
         console.log("\n--------- PAIR DATA ---------");
 
@@ -147,7 +147,7 @@ contract BlindBackrun is Ownable {
         uint profit = balanceAfter.sub(balanceBefore);
         console.log("Profit            : %s", profit);
         uint profitToCoinbase = profit.mul(percentageToPayToCoinbase).div(100);
-        IWETH(WETH_ADDRESS).withdraw(profitToCoinbase);
+        IWETH2(WETH_ADDRESS).withdraw(profitToCoinbase);
         block.coinbase.transfer(profitToCoinbase);
     }
 
@@ -165,7 +165,7 @@ contract BlindBackrun is Ownable {
         for (uint i = 0; i < _swaps.length; i++) {
             SwapInfo memory swap = _swaps[i];
             
-            IUniswapV2Pair pair = IUniswapV2Pair(swap.pair);
+            IUniswapV2Pair2 pair = IUniswapV2Pair2(swap.pair);
 
             if(swap.isZeroOut) {
                 IERC20(pair.token0()).transfer(swap.pair, swap.amountIn);
@@ -176,7 +176,7 @@ contract BlindBackrun is Ownable {
             }
         }
         if (payToCoinbase > 0) {
-            IWETH(WETH_ADDRESS).withdraw(payToCoinbase);
+            IWETH2(WETH_ADDRESS).withdraw(payToCoinbase);
             block.coinbase.transfer(payToCoinbase);
         }
     }
@@ -252,7 +252,7 @@ contract BlindBackrun is Ownable {
     /// @param pair The Uniswap V2 pair to retrieve data for.
     /// @return A IPairReserves.PairReserves struct containing price and reserve data for the given pair.
     function getPairData(
-        IUniswapV2Pair pair
+        IUniswapV2Pair2 pair
     ) public view returns (IPairReserves.PairReserves memory) {
         (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
         console.log("pair:", address(pair));

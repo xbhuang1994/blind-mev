@@ -5,6 +5,7 @@ import "../src/TokenForTesting.sol";
 import "../src/blindBackrunDebug.sol";
 import "openzeppelin/token/ERC20/IERC20.sol";
 import "openzeppelin/token/ERC20/ERC20.sol";
+import "../src/multiSwap.sol";
 
 error Unauthorized();
 
@@ -46,6 +47,7 @@ contract BlindBackrunTest is Test {
     }
 
     BlindBackrun public blindBackrun;
+    MutiSwap public mutiSwap;
     address uniswapV2RouterAddress =
         address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address sushiswapRouterAddress =
@@ -75,9 +77,12 @@ contract BlindBackrunTest is Test {
 
     function setUp() public {
         blindBackrun = new BlindBackrun(wethTokenAddress); // WETH address on
+        mutiSwap = new MutiSwap(wethTokenAddress);
         vm.deal(address(msg.sender), 1e25);
         WETH.deposit{value: 1e23}();
         WETH.transfer(address(blindBackrun), 1e23);
+        WETH.deposit{value: 1e23}();
+        WETH.transfer(address(mutiSwap), 1e23);
     }
 
     function test_arbitrageCalculation() public view {
@@ -277,8 +282,8 @@ contract BlindBackrunTest is Test {
         amountIns[0] = 1e18;
         amountIns[1] = 1e18;
         uint256[] memory amountOuts = new uint256[](2);
-        IUniswapV2Pair firstPair = IUniswapV2Pair(pairs[0]);
-        IUniswapV2Pair secondPair = IUniswapV2Pair(pairs[1]);
+        IUniswapV2Pair2 firstPair = IUniswapV2Pair2(pairs[0]);
+        IUniswapV2Pair2 secondPair = IUniswapV2Pair2(pairs[1]);
 
         IPairReserves.PairReserves memory firstPairData = blindBackrun
             .getPairData(firstPair);
@@ -295,6 +300,7 @@ contract BlindBackrunTest is Test {
             secondPairData.reserve1
         );
         console.log(amountIns[0], amountOuts[0]);
+        console.log(amountIns[1], amountOuts[1]);
         BlindBackrun.SwapInfo[] memory swaps = new BlindBackrun.SwapInfo[](2);
         // Initialize the SwapInfo struct
         BlindBackrun.SwapInfo memory swap0 = BlindBackrun.SwapInfo({
@@ -311,11 +317,32 @@ contract BlindBackrunTest is Test {
         });
         swaps[0] = swap0;
         swaps[1] = swap1;
-        uint256 startGas = gasleft();
-        blindBackrun.multi_swap(swaps, 0);
-        uint256 endGas = gasleft();
-        uint256 gasConsumed = startGas - endGas;
-        console.log("multi_swap gas :", gasConsumed);
+        // uint256 startGas = gasleft();
+        // blindBackrun.multi_swap(swaps, 0);
+        // uint256 endGas = gasleft();
+        // uint256 gasConsumed = startGas - endGas;
+        // console.log("multi_swap gas :", gasConsumed);
+        MutiSwap.SwapInfo[] memory swapInfos = new MutiSwap.SwapInfo[](2);
+        // Initialize the SwapInfo struct
+        MutiSwap.SwapInfo memory swapInfo0 = MutiSwap.SwapInfo({
+            pair: swap0.pair,
+            amountIn: 1e18,
+            amountOut: amountOuts[0],
+            isZeroOut: false
+        });
+        MutiSwap.SwapInfo memory swapInfo1 = MutiSwap.SwapInfo({
+            pair: swap1.pair,
+            amountIn: 1e18,
+            amountOut: amountOuts[1],
+            isZeroOut: false
+        });
+        swapInfos[0] = swapInfo0;
+        swapInfos[1] = swapInfo1;
+        uint256 startGas1 = gasleft();
+        mutiSwap.multi_swap(swapInfos, 0);
+        uint256 endGas1 = gasleft();
+        uint256 gasConsumed1 = startGas1 - endGas1;
+        console.log("multi_swap gas :", gasConsumed1);
     }
 
     function test_RevertWhen_CallerIsNotOwner() public {
