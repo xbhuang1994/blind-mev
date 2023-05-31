@@ -113,7 +113,7 @@ async function main() {
     console.log('ETH Balance:', ethers.utils.formatEther(wethBlance));
     console.log('WETH Balance:', ethers.utils.formatEther(balance));
 }
-function buildPayload(swaps,toCoinebase) {
+function buildPayload(swaps,toCoinebase = 0) {
     let payload = ethers.utils.solidityPack(['uint8','uint128'], [swaps.length,toCoinebase]);
 
     for (let i = 0; i < swaps.length; i++) {
