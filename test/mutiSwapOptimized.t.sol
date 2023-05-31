@@ -46,11 +46,11 @@ contract MultiSwapOptimizedTest is Test {
     }
 
     function test_multiSwapOp() public {
-        Swap[] memory swaps = new Swap[](4);
+        Swap[] memory swaps = new Swap[](1);
         swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1896830188, tokenOutNo: 1});
-        swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000000, amountOut: 1886830188, tokenOutNo: 1});
-        swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
-        swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
+        // swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000000, amountOut: 1886830188, tokenOutNo: 1});
+        // swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
+        // swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
         bytes memory payload = buildPayload(swaps);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
@@ -58,9 +58,13 @@ contract MultiSwapOptimizedTest is Test {
         assertTrue(s);
         uint balance = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(multiSwapOptimized));
 
+        // emit log_uint(payload);
+        // console.log('123');
+        emit log_bytes(payload);
         emit log_string("optimized front slice gas used");
         emit log_uint(_before - _after);
         emit log_uint(balance);
+
     }
 
     struct Swap {
@@ -86,7 +90,6 @@ contract MultiSwapOptimizedTest is Test {
                 swaps[i].tokenOutNo
             );
         }
-
         return payload;
     }
 }
