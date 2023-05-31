@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "openzeppelin/token/ERC20/IERC20.sol";
@@ -12,7 +13,7 @@ interface IWETH is IERC20 {
     function withdraw(uint) external;
 }
 
-contract MutiSwapOptimized is Ownable {
+contract MultiSwapOptimized is Ownable {
     event LogMessage(uint256 numSwaps);
     using SafeMath for uint256;
     // transfer(address,uint256)
