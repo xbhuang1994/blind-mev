@@ -24,11 +24,11 @@ async function main() {
     // 使用合约地址和 ABI 创建 WETH 合约实例
     const wethContract = new ethers.Contract(wethContractAddress, wethContractABI, wallet);
     // 将 ETH 转换为 WETH
-    const ethAmount = ethers.utils.parseEther('1'); // 转换为 1 ETH
+    const ethAmount = ethers.utils.parseEther('5'); // 转换为 1 ETH
     const wethAmount = ethAmount; // 转换相同数量的 ETH
-    // await wethContract.deposit({ value: wethAmount });
+    await wethContract.deposit({ value: wethAmount });
     // // 发送 WETH 到目标地址
-    // await wethContract.transfer(multiSwapAddress, wethAmount);
+    await wethContract.transfer(multiSwapAddress, wethAmount);
 
     const multiSwapContract = new ethers.Contract(multiSwapAddress, multiswapAbi, wallet);
 
@@ -39,30 +39,30 @@ async function main() {
             token: wethContractAddress,
             pair: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
             amountIn: '1000000000000000000',
-            amountOut: 1896830188,
+            amountOut: 1576830188,
             tokenOutNo: 1
         },
-        // {
-        //     token: wethContractAddress,
-        //     pair: '0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852',
-        //     amountIn: '1000000000000000000',
-        //     amountOut: 1886830188,
-        //     tokenOutNo: 1
-        // },
-        // {
-        //     token: wethContractAddress,
-        //     pair: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
-        //     amountIn: '1000000000000000222',
-        //     amountOut: 1876830188,
-        //     tokenOutNo: 1
-        // },
-        // {
-        //     token: wethContractAddress,
-        //     pair: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
-        //     amountIn: '1000000000000000222',
-        //     amountOut: 1876830188,
-        //     tokenOutNo: 1
-        // }
+        {
+            token: wethContractAddress,
+            pair: '0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852',
+            amountIn: '1000000000000000000',
+            amountOut: 1576830188,
+            tokenOutNo: 1
+        },
+        {
+            token: wethContractAddress,
+            pair: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
+            amountIn: '1000000000000000000',
+            amountOut: 1576830188,
+            tokenOutNo: 1
+        },
+        {
+            token: wethContractAddress,
+            pair: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
+            amountIn: '1000000000000000000',
+            amountOut: 1576830188,
+            tokenOutNo: 1
+        }
     ];
     // 构建 payload
     const frontslicePayload = buildPayload(swaps);
@@ -73,29 +73,29 @@ async function main() {
         data: frontslicePayload,
         chainId: 1,
         maxPriorityFeePerGas: 0,
-        maxFeePerGas: ethers.utils.parseUnits('100', 'gwei'),
+        maxFeePerGas: ethers.utils.parseUnits('32', 'gwei'),
         gasLimit: 250000,
+        // value: ethers.utils.parseEther('0.01'),
         nonce,
         type: 2,
     };
 
+    let gasEstimate = await provider.estimateGas(frontsliceTx);
+    gasEstimate = gasEstimate.mul(94).div(100); //offset for gas estimation diff
+    console.log('gasEstimate:', gasEstimate.toString());
     const frontsliceTxSigned = await wallet.signTransaction(frontsliceTx);
     // console.log(frontsliceTxSigned);
     let tx = await provider.sendTransaction(frontsliceTxSigned);
     const { gasUsed } = await tx.wait();
     console.log('0x0000000000000000000000000000000000000000000000000000000000000001c02aaa39b223fe8d0a0e5c4f27ead9083c756cc206da0fd433c1a5d7a4faa01111c044910a18455300000000000000000de0b6b3a7640000000000000000000000000000710f54ec01');
     console.log(tx.data);
-    console.log(gasUsed.toString());
-
-
-
-
+    console.log('gasUsed:', gasUsed.toString());
+    console.log(ethers.utils.formatEther(gasUsed.mul(frontsliceTx.maxFeePerGas)));
     balance = await wethContract.balanceOf(multiSwapAddress);
+    let  wethBlance = await provider.getBalance(multiSwapAddress);
+
+    console.log('ETH Balance:', ethers.utils.formatEther(wethBlance));
     console.log('WETH Balance:', ethers.utils.formatEther(balance));
-
-
-
-
 }
 function buildPayload(swaps) {
     let payload = ethers.utils.defaultAbiCoder.encode(['uint8'], [swaps.length]);
