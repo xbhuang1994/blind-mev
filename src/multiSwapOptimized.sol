@@ -5,7 +5,7 @@ import "openzeppelin/token/ERC20/IERC20.sol";
 import "openzeppelin/access/Ownable.sol";
 import "openzeppelin/utils/math/SafeMath.sol";
 
-import "forge-std/console.sol";
+// import "forge-std/console.sol";
 
 interface IWETH is IERC20 {
     function deposit() external payable;
@@ -15,7 +15,7 @@ interface IWETH is IERC20 {
 
 contract MultiSwapOptimized is Ownable {
     using SafeMath for uint256;
-    // Authorized
+    // Authorized use immutable save 2100 gas
     address internal immutable user;
     // transfer(address,uint256)
     bytes4 internal constant ERC20_TRANSFER_ID = 0xa9059cbb;
