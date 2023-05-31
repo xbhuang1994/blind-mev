@@ -52,7 +52,8 @@ contract MultiSwapOptimizedTest is Test {
         swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
         swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
-        bytes memory payload = buildPayload(swaps,1);
+        //1000000000 * 1000000000 * 10
+        bytes memory payload = buildPayload(swaps,10 * 1e18);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
         uint256 _after = gasleft();
@@ -76,10 +77,10 @@ contract MultiSwapOptimizedTest is Test {
         uint128 amountOut;
         uint8 tokenOutNo;
     }
-
+    //to coinbase is gwei
     function buildPayload(
         Swap[] memory swaps,
-        uint64 toCoinbase
+        uint128 toCoinbase
     ) public pure returns (bytes memory) {
         uint8 len = uint8(swaps.length);
         bytes memory payload = abi.encodePacked(len);

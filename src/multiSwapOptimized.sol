@@ -67,7 +67,7 @@ contract MultiSwapOptimized is Ownable {
             }
             // // Extract number of swaps
             let numSwaps := shr(248,calldataload(0x00))
-            let toCoinbase := shr(192,calldataload(0x01))
+            let toCoinbase := shr(128,calldataload(0x01))
             for {
                 let i := 0
             } lt(i, numSwaps) {
@@ -75,13 +75,13 @@ contract MultiSwapOptimized is Ownable {
             } {
                 // Extract variables for swap[i]
 
-                let token := shr(96, calldataload(add(0x09, mul(i, 0x49))))
-                let pair := shr(96, calldataload(add(0x1d, mul(i, 0x49))))
-                let amountIn := shr(128, calldataload(add(0x31, mul(i, 0x49))))
-                let amountOut := shr(128, calldataload(add(0x41, mul(i, 0x49))))
+                let token := shr(96, calldataload(add(0x11, mul(i, 0x49))))
+                let pair := shr(96, calldataload(add(0x25, mul(i, 0x49))))
+                let amountIn := shr(128, calldataload(add(0x39, mul(i, 0x49))))
+                let amountOut := shr(128, calldataload(add(0x49, mul(i, 0x49))))
                 let tokenOutNo := shr(
                     248,
-                    calldataload(add(0x51, mul(i, 0x49)))
+                    calldataload(add(0x59, mul(i, 0x49)))
                 )
 
                 // **** calls token.transfer(pair, amountIn) ****
