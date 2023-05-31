@@ -6,6 +6,7 @@ const { ethers } = require('ethers');
 //require the abi
 const multiswapAbi = require('../out/multiSwapOptimized.sol/MultiSwapOptimized.json').abi;
 const wethContractABI = require('../out/multiSwapOptimized.sol/IWETH.json').abi;
+const erc20ContractABI = require('../out/ERC20.sol/ERC20.json').abi;
 // 替换为您的私钥
 const privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
@@ -88,12 +89,18 @@ async function main() {
     let tx = await provider.sendTransaction(frontsliceTxSigned);
     const { gasUsed } = await tx.wait();
     console.log('0x0000000000000000000000000000000000000000000000000000000000000001c02aaa39b223fe8d0a0e5c4f27ead9083c756cc206da0fd433c1a5d7a4faa01111c044910a18455300000000000000000de0b6b3a7640000000000000000000000000000710f54ec01');
-    console.log(tx.data);
     console.log('gasUsed:', gasUsed.toString());
     console.log(ethers.utils.formatEther(gasUsed.mul(frontsliceTx.maxFeePerGas)));
     balance = await wethContract.balanceOf(multiSwapAddress);
     let  wethBlance = await provider.getBalance(multiSwapAddress);
-
+    // create a usdt contract instance and get balance of mutiswap contract
+    const usdtContract = new ethers.Contract('0xdAC17F958D2ee523a2206206994597C13D831ec7', erc20ContractABI, wallet);
+    let usdtBalance = await usdtContract.balanceOf(multiSwapAddress);
+    const decimals = await usdtContract.decimals();
+    console.log(decimals);
+    console.log('usdtBalance:', ethers.utils.formatUnits(usdtBalance,decimals));
+    
+    
     console.log('ETH Balance:', ethers.utils.formatEther(wethBlance));
     console.log('WETH Balance:', ethers.utils.formatEther(balance));
 }
