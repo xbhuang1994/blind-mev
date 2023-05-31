@@ -53,7 +53,7 @@ contract MultiSwapOptimizedTest is Test {
         swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         //1000000000 * 1000000000 * 10
-        bytes memory payload = buildPayload(swaps,10 * 1e18);
+        bytes memory payload = buildPayload(swaps,1e18);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
         uint256 _after = gasleft();
