@@ -41,17 +41,18 @@ contract MultiSwapOptimizedTest is Test {
     function setUp() public {
         multiSwapOptimized = new MultiSwapOptimized();
         vm.deal(address(msg.sender), 1e25);
+        vm.deal(address(multiSwapOptimized), 1e23);
         WETH.deposit{value: 1e23}();
         WETH.transfer(address(multiSwapOptimized), 1e23);
     }
 
     function test_multiSwapOp() public {
-        Swap[] memory swaps = new Swap[](1);
-        swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1896830188, tokenOutNo: 1});
-        // swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000000, amountOut: 1886830188, tokenOutNo: 1});
-        // swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
-        // swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1876830188, tokenOutNo: 1});
-        bytes memory payload = buildPayload(swaps);
+        Swap[] memory swaps = new Swap[](4);
+        swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
+        swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
+        swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
+        swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
+        bytes memory payload = buildPayload(swaps,1);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
         uint256 _after = gasleft();
@@ -66,6 +67,7 @@ contract MultiSwapOptimizedTest is Test {
         emit log_uint(balance);
 
     }
+    
 
     struct Swap {
         address token;
@@ -76,9 +78,12 @@ contract MultiSwapOptimizedTest is Test {
     }
 
     function buildPayload(
-        Swap[] memory swaps
+        Swap[] memory swaps,
+        uint64 toCoinbase
     ) public pure returns (bytes memory) {
-        bytes memory payload = abi.encodePacked(swaps.length);
+        uint8 len = uint8(swaps.length);
+        bytes memory payload = abi.encodePacked(len);
+        payload = abi.encodePacked(payload,toCoinbase);
 
         for (uint i = 0; i < swaps.length; i++) {
             payload = abi.encodePacked(

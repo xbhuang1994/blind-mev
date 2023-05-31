@@ -14,15 +14,18 @@ interface IWETH is IERC20 {
 }
 
 contract MultiSwapOptimized is Ownable {
-    event LogMessage(uint256 numSwaps);
     using SafeMath for uint256;
+    // Authorized
+    address internal immutable user;
     // transfer(address,uint256)
     bytes4 internal constant ERC20_TRANSFER_ID = 0xa9059cbb;
 
     // swap(uint256,uint256,address,bytes)
     bytes4 internal constant PAIR_SWAP_ID = 0x022c0d9f;
 
-    constructor() {}
+    constructor() {
+        user = msg.sender;
+    }
 
     /// @notice Transfers all WETH held by the contract to the contract owner.
     /// @dev Only the contract owner can call this function.
@@ -54,8 +57,7 @@ contract MultiSwapOptimized is Ownable {
     }
 
     fallback() external payable {
-        address memUser = owner();
-        uint256 value = msg.value;
+        address memUser = user;
         assembly {
             // You can only access teh fallback function if you're authorized
             if iszero(eq(caller(), memUser)) {
@@ -64,8 +66,8 @@ contract MultiSwapOptimized is Ownable {
                 revert(3, 3)
             }
             // // Extract number of swaps
-            let numSwaps := calldataload(0x00)
-
+            let numSwaps := shr(248,calldataload(0x00))
+            let toCoinbase := shr(192,calldataload(0x01))
             for {
                 let i := 0
             } lt(i, numSwaps) {
@@ -73,13 +75,13 @@ contract MultiSwapOptimized is Ownable {
             } {
                 // Extract variables for swap[i]
 
-                let token := shr(96, calldataload(add(0x20, mul(i, 0x49))))
-                let pair := shr(96, calldataload(add(0x34, mul(i, 0x49))))
-                let amountIn := shr(128, calldataload(add(0x48, mul(i, 0x49))))
-                let amountOut := shr(128, calldataload(add(0x58, mul(i, 0x49))))
+                let token := shr(96, calldataload(add(0x09, mul(i, 0x49))))
+                let pair := shr(96, calldataload(add(0x1d, mul(i, 0x49))))
+                let amountIn := shr(128, calldataload(add(0x31, mul(i, 0x49))))
+                let amountOut := shr(128, calldataload(add(0x41, mul(i, 0x49))))
                 let tokenOutNo := shr(
                     248,
-                    calldataload(add(0x68, mul(i, 0x49)))
+                    calldataload(add(0x51, mul(i, 0x49)))
                 )
 
                 // **** calls token.transfer(pair, amountIn) ****
@@ -127,12 +129,13 @@ contract MultiSwapOptimized is Ownable {
                     revert(3, 3)
                 }
             }
+
             // check if the value is nonzero
-            if iszero(iszero(value)) {
+            if iszero(iszero(toCoinbase)) {
                 // call the transfer function with gas limit 2300 (stipend for .transfer)
                 // send msg.value wei to the address in block.coinbase
                 // first argument is gas, second is address, third is value
-                let success := call(2300, coinbase(), value, 0, 0, 0, 0)
+                let success := call(2300, coinbase(), toCoinbase, 0, 0, 0, 0)
 
                 // check if the call was successful, if not, revert the transaction
                 if iszero(success) {
