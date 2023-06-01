@@ -59,7 +59,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     strLogPrefix += ' Univ2';
   }
   if(match(tx.to, CONTRACTS.UNIVERSAL_ROUTER)) {
-    routerDataDecoded = parseUniversalRouterTx(tx.data,tx.value);
+    routerDataDecoded = parseUniversalRouterTx(tx.data);
     strLogPrefix += ' Universal';
   }
 
@@ -146,6 +146,10 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     return;
   }
 
+  if(sandwichStates.revenue.lt(0)){
+    logDebug(strLogPrefix,"not profit");
+    return;
+  }
   // Cool profitable sandwich :)
   // But will it be post gas?
   logInfo(
@@ -157,8 +161,11 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   logInfo(
     strLogPrefix,
     "sandwichable profit",
-    JSON.stringify(ethers.utils.formatEther(sandwichStates.revenue))
+    ethers.utils.formatEther(sandwichStates.revenue),
+    ethers.utils.formatEther(optimalWethIn),
+    ethers.utils.formatEther(sandwichStates.backrun.amountOut)
   );
+  return;
   // Get block data to compute bribes etc
   // as bribes calculation has correlation with gasUsed
   const block = await wssProvider.getBlock();
@@ -242,7 +249,6 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
     return;
   }
-  return;
 
   // Extract gas
   const frontsliceGas = ethers.BigNumber.from(simulatedResp.results[0].gasUsed);

@@ -8,6 +8,7 @@ import { ethers } from "ethers";
 import { logError } from "./logging.js";
 
 const IUniswapV2PairAbi = require("./abi/IUniswapV2Pair.json");
+const IMultiSwapOptimized = require('./abi/IMultiSwapOptimized.json');
 
 let hasEnv = true;
 
@@ -71,6 +72,12 @@ export const uniswapV2Pair = new ethers.Contract(
   IUniswapV2PairAbi,
   searcherWallet
 );
+
+export const multiSwapOptimized = new ethers.Contract(
+    process.env.SANDWICH_CONTRACT,
+    IMultiSwapOptimized,
+    searcherWallet
+  );
 
 export const UniversalCommands = {
   // Masks to extract certain bits of commands

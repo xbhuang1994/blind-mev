@@ -79,7 +79,7 @@ export const calcSandwichOptimalIn = (
   // Feel free to optimize and change it
   // It shouldn't be hardcoded hehe....
   const lowerBound = parseUnits("0");
-  const upperBound = parseUnits("100");
+  const upperBound = parseUnits("5");
 
   // Optimal WETH in to push reserve to the point where the user
   // _JUST_ receives their min recv

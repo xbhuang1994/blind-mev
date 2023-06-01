@@ -1,2 +1,3 @@
-LOCAL_ACCOUNT=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-forge script script/MultiSwap.s.sol:MultiSwapOptimizedScript --fork-url http://localhost:8545 --private-key $LOCAL_ACCOUNT --broadcast
+LOCAL_ACCOUNT=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 #local test account
+# forge script script/MultiSwap.s.sol:MultiSwapOptimizedScript --fork-url http://localhost:8545 --private-key $LOCAL_ACCOUNT --broadcast
+forge create --rpc-url https://omniscient-twilight-diagram.discover.quiknode.pro/294858bdc6c5610e1e2d13d279a49d404af3e71b/ --private-key $LOCAL_ACCOUNT src/multiSwapOptimized.sol:MultiSwapOptimized

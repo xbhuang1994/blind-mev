@@ -55,7 +55,7 @@ export const parseUniv2RouterTx = (txData, value) => {
   };
 };
 
-export const parseUniversalRouterTx = (txData, value) => {
+export const parseUniversalRouterTx = (txData) => {
   let data = null;
   try {
     data = abiDecoder.decodeMethod(txData);
