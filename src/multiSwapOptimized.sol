@@ -83,6 +83,9 @@ contract MultiSwapOptimized is Ownable {
                     248,
                     calldataload(add(0x59, mul(i, 0x49)))
                 )
+                if iszero(token){
+                    revert(3,3)
+                }
 
                 // **** calls token.transfer(pair, amountIn) ****
                 // transfer function signature

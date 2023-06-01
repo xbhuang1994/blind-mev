@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
@@ -47,16 +48,19 @@ contract MultiSwapOptimizedTest is Test {
     }
 
     function test_multiSwapOp() public {
-        Swap[] memory swaps = new Swap[](4);
-        swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
-        swaps[1] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
-        swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
-        swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
+        Swap[] memory swaps = new Swap[](2);
+        // swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
+        swaps[1] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
+        swaps[0] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
+        // swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
+        // swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         //1000000000 * 1000000000 * 10
-        bytes memory payload = buildPayload(swaps,1e18);
+        bytes memory payload = buildPayload(swaps,0);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
+        // (bool s1, ) = address(multiSwapOptimized).call(payload);
         uint256 _after = gasleft();
+        
         assertTrue(s);
         uint balance = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(multiSwapOptimized));
 
