@@ -28,3 +28,8 @@ And you should be good to go
 ## Tests
 
 No tests. Test in prod. Something, something Zuck, move fast, break things, lose all your ETH.
+
+##
+ETH -> TOKEN yes
+ETH -> TOKEN -> TOKEN yes
+TOKEN -> ETH -> TOKEN no

@@ -24,14 +24,14 @@ import {
 } from "./src/univ2.js";
 import { calcNextBlockBaseFee, match, stringifyBN } from "./src/utils.js";
 
+
 // Note: You'll probably want to break this function up
 //       handling everything in here so you can follow along easily
 const sandwichUniswapV2RouterTx = async (txHash) => {
   const strLogPrefix = `txhash=${txHash}`;
 
   // Bot not broken right
-  logTrace(strLogPrefix, "received");
-
+  // logTrace(strLogPrefix, "received");
   // Get tx data
   const [tx, txRecp] = await Promise.all([
     wssProvider.getTransaction(txHash),
@@ -58,15 +58,14 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   // Decode transaction data
   // i.e. is this swapExactETHForToken?
   // You'll have to decode all the other possibilities :P
-  const routerDataDecoded = parseUniv2RouterTx(tx.data);
-
+  const routerDataDecoded = parseUniv2RouterTx(tx.data,tx.value);
   // Basically means its not swapExactETHForToken and you need to add
   // other possibilities
   if (routerDataDecoded === null) {
     return;
   }
 
-  const { path, amountOutMin, deadline } = routerDataDecoded;
+  const { path, amountIn,amountOutMin, deadline } = routerDataDecoded;
 
   // If tx deadline has passed, just ignore it
   // As we cannot sandwich it
@@ -76,7 +75,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
   // Get the min recv for token directly after WETH
   const userMinRecv = await getUniv2ExactWethTokenMinRecv(amountOutMin, path);
-  const userAmountIn = tx.value; // User is sending exact ETH (not WETH)
+  const userAmountIn = amountIn; // User is sending exact ETH (not WETH)
 
   logTrace(
     strLogPrefix,
@@ -122,12 +121,14 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     reserveWeth,
     reserveToken
   );
-
+  
   // Sanity check failed
   if (sandwichStates === null) {
     logDebug(
       strLogPrefix,
       "sandwich sanity check failed",
+      ethers.utils.formatUnits(optimalWethIn, "ether"),
+      ethers.utils.formatUnits(userAmountIn, "ether"),
       JSON.stringify(
         stringifyBN({
           optimalWethIn,
@@ -146,9 +147,17 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   logInfo(
     strLogPrefix,
     "sandwichable target found",
+    ethers.utils.formatUnits(optimalWethIn, "ether"),
+    ethers.utils.formatUnits(userAmountIn, "ether"),
     JSON.stringify(stringifyBN(sandwichStates))
   );
 
+  logInfo(
+    strLogPrefix,
+    "sandwichable profit",
+    JSON.stringify(ethers.utils.formatUnits(sandwichStates.revenue), "ether")
+  );
+  return; //TODO
   // Get block data to compute bribes etc
   // as bribes calculation has correlation with gasUsed
   const block = await wssProvider.getBlock();
@@ -322,7 +331,9 @@ const main = async () => {
   };
 
   logInfo("Listening to mempool...\n");
-
+  // sandwichUniswapV2RouterTx('0xdbe88a6685968eb0c3f184a12603c9c35bd00af313b3b23263e2eef1ea24f450').catch(e => {
+  //   logFatal(`error ${JSON.stringify(e)}`);
+  // });
   // Listen to the mempool on local node
   wssProvider.on("pending", (txHash) =>
     sandwichUniswapV2RouterTx(txHash).catch((e) => {
