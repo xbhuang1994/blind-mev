@@ -63,14 +63,14 @@ contract MultiSwapOptimizedTest is Test {
         multiSwapOptimized.withdrawETHToOwner();
         multiSwapOptimized.withdrawErc20ToOwner(wethTokenAddress);
         
-        // assertTrue(s);
+        assertTrue(s);
         uint256 balance = address(multiSwapOptimized).balance;
 
         // emit log_uint(payload);
-        // console.log('123');
-        // emit log_bytes(payload);
-        // emit log_string("optimized front slice gas used");
-        // emit log_uint(_before - _after);
+        console.log('123');
+        emit log_bytes(payload);
+        emit log_string("optimized front slice gas used");
+        emit log_uint(_before - _after);
         emit log_uint(balance);
 
     }
