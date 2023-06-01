@@ -10,7 +10,7 @@ import {
   logTrace,
 } from "./src/logging.js";
 import { calcSandwichOptimalIn, calcSandwichState } from "./src/numeric.js";
-import { parseUniv2RouterTx } from "./src/parse.js";
+import { parseUniv2RouterTx,parseUniversalRouterTx } from "./src/parse.js";
 import {
   callBundleFlashbots,
   getRawTransaction,
@@ -28,7 +28,7 @@ import { calcNextBlockBaseFee, match, stringifyBN } from "./src/utils.js";
 // Note: You'll probably want to break this function up
 //       handling everything in here so you can follow along easily
 const sandwichUniswapV2RouterTx = async (txHash) => {
-  const strLogPrefix = `txhash=${txHash}`;
+  let strLogPrefix = `txhash= ${txHash}`;
 
   // Bot not broken right
   // logTrace(strLogPrefix, "received");
@@ -47,18 +47,22 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   if (tx === null) {
     return;
   }
-
+  let routerDataDecoded = null;
   // We're not a generalized version
   // So we're just gonna listen to specific addresses
   // and decode the data from there
-  if (!match(tx.to, CONTRACTS.UNIV2_ROUTER)) {
-    return;
+  if (match(tx.to, CONTRACTS.UNIV2_ROUTER)) {
+    // Decode transaction data
+    // i.e. is this swapExactETHForToken?
+    // You'll have to decode all the other possibilities :P
+    routerDataDecoded = parseUniv2RouterTx(tx.data,tx.value);
+    strLogPrefix += ' Univ2';
+  }
+  if(match(tx.to, CONTRACTS.UNIVERSAL_ROUTER)) {
+    routerDataDecoded = parseUniversalRouterTx(tx.data,tx.value);
+    strLogPrefix += ' Universal';
   }
 
-  // Decode transaction data
-  // i.e. is this swapExactETHForToken?
-  // You'll have to decode all the other possibilities :P
-  const routerDataDecoded = parseUniv2RouterTx(tx.data,tx.value);
   // Basically means its not swapExactETHForToken and you need to add
   // other possibilities
   if (routerDataDecoded === null) {
@@ -147,17 +151,14 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   logInfo(
     strLogPrefix,
     "sandwichable target found",
-    ethers.utils.formatUnits(optimalWethIn, "ether"),
-    ethers.utils.formatUnits(userAmountIn, "ether"),
     JSON.stringify(stringifyBN(sandwichStates))
   );
 
   logInfo(
     strLogPrefix,
     "sandwichable profit",
-    JSON.stringify(ethers.utils.formatUnits(sandwichStates.revenue), "ether")
+    JSON.stringify(ethers.utils.formatEther(sandwichStates.revenue))
   );
-  return; //TODO
   // Get block data to compute bribes etc
   // as bribes calculation has correlation with gasUsed
   const block = await wssProvider.getBlock();
@@ -216,8 +217,8 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
   // Simulate tx to get the gas used
   const signedTxs = [frontsliceTxSigned, middleTx, backsliceTxSigned];
-  const simulatedResp = await callBundleFlashbots(signedTxs, targetBlockNumber);
 
+  const simulatedResp = await callBundleFlashbots(signedTxs, targetBlockNumber);
   // Try and check all the errors
   try {
     sanityCheckSimulationResponse(simulatedResp);
@@ -241,6 +242,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
     return;
   }
+  return;
 
   // Extract gas
   const frontsliceGas = ethers.BigNumber.from(simulatedResp.results[0].gasUsed);
