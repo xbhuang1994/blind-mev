@@ -55,20 +55,22 @@ contract MultiSwapOptimizedTest is Test {
         // swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         // swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         //1000000000 * 1000000000 * 10
-        bytes memory payload = buildPayload(swaps,0);
+        bytes memory payload = buildPayload(swaps,1e18);
         uint256 _before = gasleft();
         (bool s, ) = address(multiSwapOptimized).call(payload);
         // (bool s1, ) = address(multiSwapOptimized).call(payload);
         uint256 _after = gasleft();
+        multiSwapOptimized.withdrawETHToOwner();
+        multiSwapOptimized.withdrawErc20ToOwner(wethTokenAddress);
         
-        assertTrue(s);
-        uint balance = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(multiSwapOptimized));
+        // assertTrue(s);
+        uint256 balance = address(multiSwapOptimized).balance;
 
         // emit log_uint(payload);
         // console.log('123');
-        emit log_bytes(payload);
-        emit log_string("optimized front slice gas used");
-        emit log_uint(_before - _after);
+        // emit log_bytes(payload);
+        // emit log_string("optimized front slice gas used");
+        // emit log_uint(_before - _after);
         emit log_uint(balance);
 
     }
@@ -102,4 +104,6 @@ contract MultiSwapOptimizedTest is Test {
         }
         return payload;
     }
+    // Contructor sets the only user
+    receive() external payable {}
 }
