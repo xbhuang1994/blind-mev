@@ -106,7 +106,7 @@ export const calcSandwichState = (
     frontrunState.newReserveB
   );
   const backrunState = getUniv2DataGivenIn(
-    frontrunState.amountOut,
+    frontrunState.amountOut.sub(1), //Save a bit to save gas fee for the next attack
     victimState.newReserveB,
     victimState.newReserveA
   );

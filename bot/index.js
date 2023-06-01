@@ -10,7 +10,7 @@ import {
   logTrace,
 } from "./src/logging.js";
 import { calcSandwichOptimalIn, calcSandwichState } from "./src/numeric.js";
-import { parseUniv2RouterTx,parseUniversalRouterTx } from "./src/parse.js";
+import { parseUniv2RouterTx, parseUniversalRouterTx } from "./src/parse.js";
 import {
   callBundleFlashbots,
   getRawTransaction,
@@ -24,6 +24,7 @@ import {
 } from "./src/univ2.js";
 import { calcNextBlockBaseFee, match, stringifyBN } from "./src/utils.js";
 
+const blockMap = new Map();
 
 // Note: You'll probably want to break this function up
 //       handling everything in here so you can follow along easily
@@ -55,10 +56,10 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     // Decode transaction data
     // i.e. is this swapExactETHForToken?
     // You'll have to decode all the other possibilities :P
-    routerDataDecoded = parseUniv2RouterTx(tx.data,tx.value);
+    routerDataDecoded = parseUniv2RouterTx(tx.data, tx.value);
     strLogPrefix += ' Univ2';
   }
-  if(match(tx.to, CONTRACTS.UNIVERSAL_ROUTER)) {
+  if (match(tx.to, CONTRACTS.UNIVERSAL_ROUTER)) {
     routerDataDecoded = parseUniversalRouterTx(tx.data);
     strLogPrefix += ' Universal';
   }
@@ -69,7 +70,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     return;
   }
 
-  const { path, amountIn,amountOutMin, deadline } = routerDataDecoded;
+  const { path, amountIn, amountOutMin, deadline } = routerDataDecoded;
 
   // If tx deadline has passed, just ignore it
   // As we cannot sandwich it
@@ -125,7 +126,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     reserveWeth,
     reserveToken
   );
-  
+
   // Sanity check failed
   if (sandwichStates === null) {
     logDebug(
@@ -146,8 +147,8 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     return;
   }
 
-  if(sandwichStates.revenue.lt(0)){
-    logDebug(strLogPrefix,"not profit");
+  if (sandwichStates.revenue.lt(0)) {
+    logDebug(strLogPrefix, "not profit");
     return;
   }
   // Cool profitable sandwich :)
@@ -165,25 +166,35 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     ethers.utils.formatEther(optimalWethIn),
     ethers.utils.formatEther(sandwichStates.backrun.amountOut)
   );
-  return;
   // Get block data to compute bribes etc
   // as bribes calculation has correlation with gasUsed
   const block = await wssProvider.getBlock();
   const targetBlockNumber = block.number + 1;
+  logInfo(strLogPrefix,'targetBlockNumber', targetBlockNumber);
+
   const nextBaseFee = calcNextBlockBaseFee(block);
   const nonce = await wssProvider.getTransactionCount(searcherWallet.address);
-
+  logInfo(strLogPrefix,'noce ', nonce);
+  const frontsliceSwap = {
+    token: weth,
+    pair: pairToSandwich,
+    amountIn: optimalWethIn,
+    amountOut: sandwichStates.frontrun.amountOut,
+    tokenOutNo: ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
+  }
   // Craft our payload
-  const frontslicePayload = ethers.utils.solidityPack(
-    ["address", "address", "uint128", "uint128", "uint8"],
-    [
-      token,
-      pairToSandwich,
-      optimalWethIn,
-      sandwichStates.frontrun.amountOut,
-      ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
-    ]
-  );
+  const frontslicePayload = buildPayload([frontsliceSwap], 0);
+
+  // ethers.utils.solidityPack(
+  //   ["address", "address", "uint128", "uint128", "uint8"],
+  //   [
+  //     token,
+  //     pairToSandwich,
+  //     optimalWethIn,
+  //     sandwichStates.frontrun.amountOut,
+  //     ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
+  //   ]
+  // );
   const frontsliceTx = {
     to: CONTRACTS.SANDWICH,
     from: searcherWallet.address,
@@ -195,20 +206,28 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     nonce,
     type: 2,
   };
+  logInfo(strLogPrefix,'start sig', frontsliceTx.from);
   const frontsliceTxSigned = await searcherWallet.signTransaction(frontsliceTx);
 
   const middleTx = getRawTransaction(tx);
-
-  const backslicePayload = ethers.utils.solidityPack(
-    ["address", "address", "uint128", "uint128", "uint8"],
-    [
-      weth,
-      pairToSandwich,
-      sandwichStates.frontrun.amountOut,
-      sandwichStates.backrun.amountOut,
-      ethers.BigNumber.from(weth).lt(ethers.BigNumber.from(token)) ? 0 : 1,
-    ]
-  );
+  const backsliceSwap = {
+    token: token,
+    pair: pairToSandwich,
+    amountIn: sandwichStates.frontrun.amountOut.sub(1),//Save a bit to save gas fee for the next attack
+    amountOut: sandwichStates.backrun.amountOut,
+    tokenOutNo: ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
+  }
+  const backslicePayload = buildPayload([backsliceSwap], 1);
+  // ethers.utils.solidityPack(
+  //   ["address", "address", "uint128", "uint128", "uint8"],
+  //   [
+  //     weth,
+  //     pairToSandwich,
+  //     sandwichStates.frontrun.amountOut,
+  //     sandwichStates.backrun.amountOut,
+  //     ethers.BigNumber.from(weth).lt(ethers.BigNumber.from(token)) ? 0 : 1,
+  //   ]
+  // );
   const backsliceTx = {
     to: CONTRACTS.SANDWICH,
     from: searcherWallet.address,
@@ -224,7 +243,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
   // Simulate tx to get the gas used
   const signedTxs = [frontsliceTxSigned, middleTx, backsliceTxSigned];
-
+  logInfo(strLogPrefix,'================= try simulate ===================');
   const simulatedResp = await callBundleFlashbots(signedTxs, targetBlockNumber);
   // Try and check all the errors
   try {
@@ -233,31 +252,37 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     logError(
       strLogPrefix,
       "error while simulating",
-      JSON.stringify(
-        stringifyBN({
-          error: e,
-          block,
-          targetBlockNumber,
-          nextBaseFee,
-          nonce,
-          sandwichStates,
-          frontsliceTx,
-          backsliceTx,
-        })
-      )
+      // JSON.stringify(
+      //   stringifyBN({
+      //     error: e,
+      //     // block,
+      //     targetBlockNumber,
+      //     nextBaseFee,
+      //     nonce,
+      //     sandwichStates,
+      //     frontsliceTx,
+      //     backsliceTx,
+      //   })
+      // )
     );
 
     return;
   }
-
   // Extract gas
   const frontsliceGas = ethers.BigNumber.from(simulatedResp.results[0].gasUsed);
+  
   const backsliceGas = ethers.BigNumber.from(simulatedResp.results[2].gasUsed);
+  logInfo(strLogPrefix, "gas =====================", stringifyBN([frontsliceGas,backsliceGas, frontsliceGas.add(backsliceGas)]));
+  return;
 
   // Bribe 99.99% :P
   const bribeAmount = sandwichStates.revenue.sub(
     frontsliceGas.mul(nextBaseFee)
   );
+
+  // console.log(frontsliceGas);
+  // console.log(backsliceGas);
+  return;
   const maxPriorityFeePerGas = bribeAmount
     .mul(9999)
     .div(10000)
@@ -349,5 +374,19 @@ const main = async () => {
     })
   );
 };
+function buildPayload(swaps, toCoinebase = 0) {
+  let payload = ethers.utils.solidityPack(['uint8', 'uint128'], [swaps.length, toCoinebase]);
+
+  for (let i = 0; i < swaps.length; i++) {
+    const swap = swaps[i];
+    const swapData = ethers.utils.solidityPack(
+      ['address', 'address', 'uint128', 'uint128', 'uint8'],
+      [swap.token, swap.pair, swap.amountIn, swap.amountOut, swap.tokenOutNo]
+    );
+    payload = ethers.utils.concat([payload, swapData]);
+  }
+
+  return payload;
+}
 
 main();
