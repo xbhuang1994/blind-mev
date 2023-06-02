@@ -30,6 +30,7 @@ const blockMap = new Map();
 //       handling everything in here so you can follow along easily
 const sandwichUniswapV2RouterTx = async (txHash) => {
   let strLogPrefix = `txhash= ${txHash}`;
+  const startTime = process.hrtime(); // 记录开始时间
 
   // Bot not broken right
   // logTrace(strLogPrefix, "received");
@@ -38,10 +39,17 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     wssProvider.getTransaction(txHash),
     wssProvider.getTransactionReceipt(txHash),
   ]);
+  
+  const endTime = process.hrtime(startTime); // 计算时间差
+  
+  // 将时间差转换为毫秒
+  const executionTime = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+  
+  // console.log(`代码块执行时间：${executionTime} 毫秒`);
 
   // Make sure transaction hasn't been mined
   if (txRecp !== null) {
-    return;
+    // return;
   }
 
   // Sometimes tx is null for some reason
@@ -75,7 +83,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   // If tx deadline has passed, just ignore it
   // As we cannot sandwich it
   if (new Date().getTime() / 1000 > deadline) {
-    return;
+    // return;
   }
 
   // Get the min recv for token directly after WETH
@@ -170,11 +178,11 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   // as bribes calculation has correlation with gasUsed
   const block = await wssProvider.getBlock();
   const targetBlockNumber = block.number + 1;
-  logInfo(strLogPrefix,'targetBlockNumber', targetBlockNumber);
+  logInfo(strLogPrefix, 'targetBlockNumber', targetBlockNumber);
 
   const nextBaseFee = calcNextBlockBaseFee(block);
   const nonce = await wssProvider.getTransactionCount(searcherWallet.address);
-  logInfo(strLogPrefix,'noce ', nonce);
+  logInfo(strLogPrefix, 'noce ', nonce);
   const frontsliceSwap = {
     token: weth,
     pair: pairToSandwich,
@@ -206,7 +214,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     nonce,
     type: 2,
   };
-  logInfo(strLogPrefix,'start sig', frontsliceTx.from);
+  logInfo(strLogPrefix, 'start sig', frontsliceTx.from);
   const frontsliceTxSigned = await searcherWallet.signTransaction(frontsliceTx);
 
   const middleTx = getRawTransaction(tx);
@@ -243,7 +251,8 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
   // Simulate tx to get the gas used
   const signedTxs = [frontsliceTxSigned, middleTx, backsliceTxSigned];
-  logInfo(strLogPrefix,'================= try simulate ===================');
+  // const signedTxs = [frontsliceTxSigned];
+  logInfo(strLogPrefix, '================= try simulate ===================',targetBlockNumber);
   const simulatedResp = await callBundleFlashbots(signedTxs, targetBlockNumber);
   // Try and check all the errors
   try {
@@ -270,45 +279,88 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   }
   // Extract gas
   const frontsliceGas = ethers.BigNumber.from(simulatedResp.results[0].gasUsed);
-  
+  // logInfo(strLogPrefix, "gas =====================", stringifyBN([frontsliceGas]));
+  // return;
   const backsliceGas = ethers.BigNumber.from(simulatedResp.results[2].gasUsed);
-  logInfo(strLogPrefix, "gas =====================", stringifyBN([frontsliceGas,backsliceGas, frontsliceGas.add(backsliceGas)]));
-  return;
+  logInfo(strLogPrefix, "gas ", stringifyBN([frontsliceGas, backsliceGas, frontsliceGas.add(backsliceGas)]));
+  // return;
 
   // Bribe 99.99% :P
   const bribeAmount = sandwichStates.revenue.sub(
     frontsliceGas.mul(nextBaseFee)
   );
 
+  const toCoinebase = bribeAmount.mul(9999).div(10000);
+  logInfo(
+    strLogPrefix,
+    "=======================  bribe =========================",
+    ethers.utils.formatEther(bribeAmount),
+    ethers.utils.formatEther(toCoinebase)
+  );
+  if(bribeAmount.lt(0)){
+    logInfo(strLogPrefix, "not profit");
+    return;
+  }
+  // return;
+
   // console.log(frontsliceGas);
   // console.log(backsliceGas);
-  return;
-  const maxPriorityFeePerGas = bribeAmount
-    .mul(9999)
-    .div(10000)
-    .div(backsliceGas);
+  // return;
+  // const maxPriorityFeePerGas = bribeAmount
+  //   .mul(9999)
+  //   .div(10000)
+  //   .div(backsliceGas);
 
   // Note: you probably want some circuit breakers here so you don't lose money
   // if you fudged shit up
 
   // If 99.99% bribe isn't enough to cover base fee, its not worth it
-  if (maxPriorityFeePerGas.lt(nextBaseFee)) {
-    logTrace(
+  // if (maxPriorityFeePerGas.lt(nextBaseFee)) {
+  //   logTrace(
+  //     strLogPrefix,
+  //     `maxPriorityFee (${formatUnits(
+  //       maxPriorityFeePerGas,
+  //       9
+  //     )}) gwei < nextBaseFee (${formatUnits(nextBaseFee, 9)}) gwei`
+  //   );
+  //   return;
+  // }
+  const backslicePayload2 = buildPayload([backsliceSwap], toCoinebase);
+  const backsliceTx2 = {
+    ...backsliceTx,
+    data: backslicePayload2,
+  }
+  // Okay, update backslice tx
+  const backsliceTxSignedWithBribe = await searcherWallet.signTransaction(backsliceTx2);
+  
+  logInfo(strLogPrefix, '================= try simulate again ===================',targetBlockNumber);
+  const simulatedResp2 = await callBundleFlashbots([frontsliceTxSigned, middleTx, backsliceTxSignedWithBribe], targetBlockNumber);
+  // Try and check all the errors
+  try {
+    sanityCheckSimulationResponse(simulatedResp2);
+  } catch (e) {
+    logError(
       strLogPrefix,
-      `maxPriorityFee (${formatUnits(
-        maxPriorityFeePerGas,
-        9
-      )}) gwei < nextBaseFee (${formatUnits(nextBaseFee, 9)}) gwei`
+      "error while simulating again",
+      JSON.stringify(
+        stringifyBN({
+          error: e,
+          // block,
+          // targetBlockNumber,
+          // nextBaseFee,
+          // nonce,
+          // sandwichStates,
+          // frontsliceTx,
+          backsliceTx2,
+        })
+      )
     );
+
     return;
   }
-
-  // Okay, update backslice tx
-  const backsliceTxSignedWithBribe = await searcherWallet.signTransaction({
-    ...backsliceTx,
-    maxPriorityFeePerGas,
-  });
-
+  logSuccess(strLogPrefix,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  // throw new Error("????");
+  return;
   // Fire the bundles
   const bundleResp = await sendBundleFlashbots(
     [frontsliceTxSigned, middleTx, backsliceTxSignedWithBribe],
@@ -324,7 +376,6 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
       nonce,
       sandwichStates,
       frontsliceTx,
-      maxPriorityFeePerGas,
       bundleResp
     )
   );
@@ -364,14 +415,17 @@ const main = async () => {
   };
 
   logInfo("Listening to mempool...\n");
-  // sandwichUniswapV2RouterTx('0xdbe88a6685968eb0c3f184a12603c9c35bd00af313b3b23263e2eef1ea24f450').catch(e => {
+  // sandwichUniswapV2RouterTx('0x83caa6827f6ffd0cb6872cbca8526444c00992601a2086c3a449228c3d35386d').catch(e => {
   //   logFatal(`error ${JSON.stringify(e)}`);
   // });
   // Listen to the mempool on local node
-  wssProvider.on("pending", (txHash) =>
-    sandwichUniswapV2RouterTx(txHash).catch((e) => {
-      logFatal(`txhash=${txHash} error ${JSON.stringify(e)}`);
-    })
+  wssProvider.on("pending", (txHash) => {
+    sandwichUniswapV2RouterTx(txHash);  
+    // sandwichUniswapV2RouterTx(txHash).catch((e) => {
+    //   logFatal(`txhash=${txHash} error ${JSON.stringify(e)}`);
+    // })
+  }
+
   );
 };
 function buildPayload(swaps, toCoinebase = 0) {

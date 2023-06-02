@@ -48,10 +48,10 @@ contract MultiSwapOptimizedTest is Test {
     }
 
     function test_multiSwapOp() public {
-        Swap[] memory swaps = new Swap[](2);
-        // swaps[0] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
-        swaps[1] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
-        swaps[0] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
+        Swap[] memory swaps = new Swap[](1);
+        swaps[0] = Swap({token: wethTokenAddress, pair: 0x40643d019BcB381800F0C2D593a4a6472cCd7493, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
+        // swaps[1] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000000, amountOut: 1756830180, tokenOutNo: 1});
+        // swaps[0] = Swap({token: wethTokenAddress, pair: 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852, amountIn: 1000000000000000001, amountOut: 1786830181, tokenOutNo: 1});
         // swaps[2] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         // swaps[3] = Swap({token: wethTokenAddress, pair: 0x06da0fd433C1A5d7a4faa01111c044910A184553, amountIn: 1000000000000000222, amountOut: 1756830180, tokenOutNo: 1});
         //1000000000 * 1000000000 * 10

@@ -32,13 +32,20 @@ export const getUniv2PairAddress = (tokenA, tokenB) => {
   Get reserve helper function
 */
 export const getUniv2Reserve = async (pair, tokenA, tokenB) => {
-  const [token0] = sortTokens(tokenA, tokenB);
-  const [reserve0, reserve1] = await uniswapV2Pair.attach(pair).getReserves();
+  try {
 
-  if (match(tokenA, token0)) {
-    return [reserve0, reserve1];
+    const [token0] = sortTokens(tokenA, tokenB);
+    const [reserve0, reserve1] = await uniswapV2Pair.attach(pair).getReserves();
+
+    if (match(tokenA, token0)) {
+      return [reserve0, reserve1];
+    }
+    return [reserve1, reserve0];
+
+  } catch (error) {
+    console.log("can not fund to get reserve,is new pair?", error);
+    return [0, 0];
   }
-  return [reserve1, reserve0];
 };
 
 /*
@@ -47,28 +54,40 @@ export const getUniv2Reserve = async (pair, tokenA, tokenB) => {
  How much out do we get if we supply in?
 */
 export const getUniv2DataGivenIn = (aIn, reserveA, reserveB) => {
-  const aInWithFee = aIn.mul(997);
-  const numerator = aInWithFee.mul(reserveB);
-  const denominator = aInWithFee.add(reserveA.mul(1000));
-  const bOut = numerator.div(denominator);
+  try {
 
-  // Underflow
-  let newReserveB = reserveB.sub(bOut);
-  if (newReserveB.lt(0) || newReserveB.gt(reserveB)) {
-    newReserveB = ethers.BigNumber.from(1);
+    const aInWithFee = aIn.mul(997);
+    const numerator = aInWithFee.mul(reserveB);
+    const denominator = aInWithFee.add(reserveA.mul(1000));
+    const bOut = numerator.div(denominator);
+
+    // Underflow
+    let newReserveB = reserveB.sub(bOut);
+    if (newReserveB.lt(0) || newReserveB.gt(reserveB)) {
+      newReserveB = ethers.BigNumber.from(1);
+    }
+
+    // Overflow
+    let newReserveA = reserveA.add(aIn);
+    if (newReserveA.lt(reserveA)) {
+      newReserveA = ethers.constants.MaxInt256;
+    }
+    return {
+      amountOut: bOut,
+      newReserveA,
+      newReserveB,
+    };
+
+  } catch (error) {
+    // console.log(aIn, numerator, denominator);
+    // throw new Error(error);
+    console.error(error);
+    return {
+      amountOut: 0,
+      newReserveA: 0,
+      newReserveB: 0,
+    }
   }
-
-  // Overflow
-  let newReserveA = reserveA.add(aIn);
-  if (newReserveA.lt(reserveA)) {
-    newReserveA = ethers.constants.MaxInt256;
-  }
-
-  return {
-    amountOut: bOut,
-    newReserveA,
-    newReserveB,
-  };
 };
 
 /*

@@ -62,6 +62,10 @@ export const parseUniversalRouterTx = (txData) => {
   } catch (e) {
     return null;
   }
+  // invalid transaction
+  if(!data){
+    return null;
+  }
   // let commandArr = parseCommands(data);
   if (data.name == "execute") {
     const abiCoder = new ethers.utils.AbiCoder();
@@ -74,12 +78,21 @@ export const parseUniversalRouterTx = (txData) => {
         case UniversalCommands.V2_SWAP_EXACT_IN:
           {
             const [address, amountIn, amountOutMin, path, bl] = abiCoder.decode(['address', 'uint256', 'uint256', 'address[]', 'bool'], inputData);
+            if(amountIn.eq('0x8000000000000000000000000000000000000000000000000000000000000000')){
+              console.log('TODO multi path TOKEN > WETH > TOKEN');
+              return null;
+            }
             if (path[0] == TOKENS.WETH)
               return { amountIn, amountOutMin, path, deadline };
           }
         case UniversalCommands.V2_SWAP_EXACT_OUT:
           {
             const [address, amountOutMin, amountIn, path, bl] = abiCoder.decode(['address', 'uint256', 'uint256', 'address[]', 'bool'], inputData);
+
+            if(amountIn.eq('0x8000000000000000000000000000000000000000000000000000000000000000')){
+              console.log('TODO multi path TOKEN > WETH > TOKEN');
+              return null;
+            }
             if (path[0] == TOKENS.WETH)
               return { amountIn, amountOutMin, path, deadline };
           }
