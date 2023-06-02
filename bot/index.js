@@ -287,13 +287,14 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
   const backsliceGas = ethers.BigNumber.from(simulatedResp.results[2].gasUsed);
   logInfo(strLogPrefix, "gas ", stringifyBN([frontsliceGas, backsliceGas, frontsliceGas.add(backsliceGas)]));
   // return;
+  const totalGas = frontsliceGas.add(backsliceGas);
 
   // Bribe 99.99% :P
   const bribeAmount = sandwichStates.revenue.sub(
-    frontsliceGas.mul(nextBaseFee)
+    totalGas.mul(nextBaseFee)
   );
 
-  const toCoinebase = bribeAmount.mul(9999).div(10000);
+  const toCoinebase = bribeAmount.mul(9901).div(10000);
   logInfo(
     strLogPrefix,
     "=======================  bribe =========================",

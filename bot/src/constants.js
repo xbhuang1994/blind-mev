@@ -9,7 +9,7 @@ import { logError } from "./logging.js";
 
 const IUniswapV2PairAbi = require("./abi/IUniswapV2Pair.json");
 const IMultiSwapOptimized = require('./abi/IMultiSwapOptimized.json');
-
+const IWETHAbi = require('./abi/IWETH.json');
 let hasEnv = true;
 
 const ENV_VARS = [
@@ -70,6 +70,12 @@ export const authKeyWallet = new ethers.Wallet(
 export const uniswapV2Pair = new ethers.Contract(
   ethers.constants.AddressZero,
   IUniswapV2PairAbi,
+  searcherWallet
+);
+
+export const wethContract = new ethers.Contract(
+  TOKENS.WETH,
+  IWETHAbi,
   searcherWallet
 );
 
