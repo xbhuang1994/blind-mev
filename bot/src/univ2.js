@@ -43,8 +43,8 @@ export const getUniv2Reserve = async (pair, tokenA, tokenB) => {
     return [reserve1, reserve0];
 
   } catch (error) {
-    console.log("can not fund to get reserve,is new pair?", error);
-    return [0, 0];
+    console.error("can not fund to get reserve,is new pair?",pair);
+    return [null, null];
   }
 };
 

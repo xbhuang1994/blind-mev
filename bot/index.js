@@ -111,6 +111,9 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     weth,
     token
   );
+  if(reserveWeth === null || reserveToken === null) {
+    return;
+  }
   const optimalWethIn = calcSandwichOptimalIn(
     userAmountIn,
     userMinRecv,
@@ -223,7 +226,7 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
     pair: pairToSandwich,
     amountIn: sandwichStates.frontrun.amountOut.sub(1),//Save a bit to save gas fee for the next attack
     amountOut: sandwichStates.backrun.amountOut,
-    tokenOutNo: ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
+    tokenOutNo: ethers.BigNumber.from(weth).lt(ethers.BigNumber.from(token)) ? 0 : 1,
   }
   const backslicePayload = buildPayload([backsliceSwap], 1);
   // ethers.utils.solidityPack(
