@@ -81,7 +81,7 @@ export const getUniv2DataGivenIn = (aIn, reserveA, reserveB) => {
   } catch (error) {
     // console.log(aIn, numerator, denominator);
     // throw new Error(error);
-    console.error(error);
+    console.log(error);
     return {
       amountOut: 0,
       newReserveA: 0,

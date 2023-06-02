@@ -361,9 +361,9 @@ const sandwichUniswapV2RouterTx = async (txHash) => {
 
     return;
   }
-  logSuccess(strLogPrefix,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  // logSuccess(strLogPrefix,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   // throw new Error("????");
-  return;
+  // return;
   // Fire the bundles
   const bundleResp = await sendBundleFlashbots(
     [frontsliceTxSigned, middleTx, backsliceTxSignedWithBribe],
@@ -423,10 +423,10 @@ const main = async () => {
   // });
   // Listen to the mempool on local node
   wssProvider.on("pending", (txHash) => {
-    sandwichUniswapV2RouterTx(txHash);  
-    // sandwichUniswapV2RouterTx(txHash).catch((e) => {
-    //   logFatal(`txhash=${txHash} error ${JSON.stringify(e)}`);
-    // })
+    // sandwichUniswapV2RouterTx(txHash);  
+    sandwichUniswapV2RouterTx(txHash).catch((e) => {
+      logFatal(`txhash=${txHash} error ${JSON.stringify(e)}`);
+    })
   }
 
   );
