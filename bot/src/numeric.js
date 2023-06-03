@@ -14,7 +14,7 @@ export const binarySearch = (
   right, // Upper bound
   calculateF, // Generic calculate function
   passConditionF, // Condition checker
-  tolerance = parseUnits("0.01") // Tolerable delta (in %, in 18 dec, i.e. parseUnits('0.01') means left and right delta can be 1%)
+  tolerance = parseUnits("0.0000000001") // Tolerable delta (in %, in 18 dec, i.e. parseUnits('0.01') means left and right delta can be 1%)
 ) => {
   if (right.sub(left).gt(tolerance.mul(right.add(left).div(2)).div(BN_18))) {
     const mid = right.add(left).div(2);
@@ -36,7 +36,7 @@ export const binarySearch = (
     return ethers.constants.Zero;
   }
 
-  return ret;
+  return ret.sub(tolerance);
 };
 
 /*

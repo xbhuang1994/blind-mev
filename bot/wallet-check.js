@@ -6,7 +6,7 @@ const main = async () => {
         let walletBlance = await searcherWallet.getBalance();
         let wethBlance = await wethContract.balanceOf(CONTRACTS.SANDWICH);
         let totalBlance = sandwichBlance.add(sandwichBlance).add(wethBlance);
-        console.log(walletBlance.toString(),sandwichBlance.toString(),wethBlance.toString());
+        // console.log(walletBlance.toString(),sandwichBlance.toString(),wethBlance.toString());
         console.log("ETH TOTAL:",ethers.utils.formatEther(totalBlance));
         await sleep(1000 * 60);
     }

@@ -392,6 +392,11 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
+"@flashbots/ethers-provider-bundle@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@flashbots/ethers-provider-bundle/-/ethers-provider-bundle-0.6.2.tgz#b1c9bf74f29f2715075b60bf7db0557c01692001"
+  integrity sha512-W4Hi47zWggWgLBwhoxH3qaojudAjcbBU+ldEYi5o06UQm/25Hk/AUvCLiN+9nvy1g3xxpF9QBdMniUwjC4cpBw==
+
 "@humanwhocodes/config-array@^0.11.8":
   version "0.11.9"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.9.tgz#eb6a9a2c7c2690bb4abcde8a684112b1004c2717"

@@ -9,7 +9,7 @@ import { logError } from "./logging.js";
 
 const IUniswapV2PairAbi = require("./abi/IUniswapV2Pair.json");
 const IMultiSwapOptimized = require('./abi/IMultiSwapOptimized.json');
-const IWETHAbi = require('./abi/IWETH.json');
+export const IWETHAbi = require('./abi/IWETH.json');
 let hasEnv = true;
 
 const ENV_VARS = [

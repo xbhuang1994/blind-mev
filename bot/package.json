@@ -8,10 +8,11 @@
   "scripts": {
     "bot": "node index.js",
     "helper": "node helper.js",
-    "wallet-check":"node wallet-check.js"
+    "wallet-check": "node wallet-check.js"
   },
   "dependencies": {
     "@ethereumjs/tx": "^3.4.0",
+    "@flashbots/ethers-provider-bundle": "^0.6.2",
     "@typechain/ethers-v5": "^11.0.0",
     "abi-decoder": "^2.4.0",
     "chalk": "^5.0.0",
